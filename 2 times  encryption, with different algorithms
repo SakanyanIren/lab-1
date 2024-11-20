@@ -1,0 +1,69 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+// Шифрование с использованием шифра Цезаря
+std::string caesarEncrypt(const std::string& text, int shift) {
+    std::string result;
+    for (char c : text) {
+        if (isalpha(c)) { // Проверяем, является ли символ буквой
+            char base = islower(c) ? 'a' : 'A'; // Определяем базовый символ (a или A)
+            result += (c - base + shift) % 26 + base; // Выполняем сдвиг и возвращаем символ
+        } else {
+            result += c; // Неалфавитные символы оставляем без изменений
+        }
+    }
+    return result;
+}
+
+// Шифрование с использованием алгоритма RC4
+std::string rc4Encrypt(const std::string& text, const std::string& key) {
+    std::vector<int> S(256); // Инициализируем массив S
+    std::vector<int> T(256); // Инициализируем массив T
+    std::string output;
+
+    // Алгоритм настройки ключа (Key-Scheduling Algorithm, KSA)
+    for (int i = 0; i < 256; ++i) {
+        S[i] = i; // Инициализируем массив S
+        T[i] = key[i % key.size()]; // Заполняем массив T значениями из ключа
+    }
+
+    int j = 0;
+    for (int i = 0; i < 256; ++i) {
+        j = (j + S[i] + T[i]) % 256; // Вычисляем индекс для перестановки
+        std::swap(S[i], S[j]); // Меняем местами значения в S
+    }
+
+    // Генерация псевдослучайного потока (Pseudo-Random Generation Algorithm, PRGA)
+    int i = 0;
+    j = 0;
+    for (char c : text) {
+        i = (i + 1) % 256; // Увеличиваем индекс i
+        j = (j + S[i]) % 256; // Увеличиваем индекс j
+        std::swap(S[i], S[j]); // Меняем местами значения в S
+        int K = S[(S[i] + S[j]) % 256]; // Генерируем ключевой байт
+        output += c ^ K; // XOR с символом текста
+    }
+
+    return output;
+}
+
+int main() {
+    std::string text = "Hello, World!"; // Исходный текст
+    int caesarShift = 3; // Сдвиг для шифра Цезаря
+    std::string rc4Key = "secretkey"; // Ключ для RC4
+
+    // Шифрование с использованием шифра Цезаря
+    std::string caesarEncrypted = caesarEncrypt(text, caesarShift);
+    std::cout << "Caesar Encrypted Text: " << caesarEncrypted << std::endl;
+
+    // Шифрование с использованием RC4
+    std::string rc4Encrypted = rc4Encrypt(text, rc4Key);
+    std::cout << "RC4 Encrypted Text: ";
+    for (unsigned char c : rc4Encrypted) {
+        std::cout << std::hex << (int)c << " "; // Выводим зашифрованный текст в шестнадцатеричном формате
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
